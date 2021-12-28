@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float rigidBodyVelocityY;
     [SerializeField] public float rigidBodyVelocityX;
     [SerializeField] public float raycastHitDistance;
+    [SerializeField] public float forwardMomentum;
     [SerializeField] public bool isJumping;
 
     // Start is called before the first frame update
@@ -43,12 +44,14 @@ public class PlayerController : MonoBehaviour
 
         if (jumping && !singleJumping)
         {
+            forwardMomentum = rawSpeed;
             singleJumping = true;
             animator.applyRootMotion = false;
-            //animator.animatePhysics = true;
-            //rigidbody2D.AddForce(Vector3.up * jumpForce);
             rigidbody2D.AddForce(new Vector2(300, jumpForce), ForceMode2D.Force);
 
+
+            //animator.animatePhysics = true;
+            //rigidbody2D.AddForce(Vector3.up * jumpForce);
             //rigidbody2D.AddForce(new Vector3(1, 1, 0));
             //rigidbody2D.velocity += new Vector2(4, 7) * 3;
             //Vector3 targetVelocity = new Vector2(1 * 550f * Time.fixedDeltaTime, rigidbody2D.velocity.y);
@@ -59,6 +62,11 @@ public class PlayerController : MonoBehaviour
         if (rawSpeed != 0)
         {
             rigidbody2D.AddForce(new Vector2(300 * rawSpeed, 0), ForceMode2D.Force);
+        }
+
+        if (singleJumping && forwardMomentum != 0)
+        {
+            rigidbody2D.AddForce(new Vector2(300 * forwardMomentum, 0), ForceMode2D.Force);
         }
 
         IsGrounded();
@@ -74,12 +82,10 @@ public class PlayerController : MonoBehaviour
 
         if (rawSpeed < 0.0 && !m_FacingRight)
         {
-            //transform.localScale = new Vector3(-1, 1, 1);
             Flip();
         }
         else if (rawSpeed > 0.0 && m_FacingRight)
         {
-            //transform.localScale = new Vector3(1, 1, 1);
             Flip();
         }
 
@@ -100,10 +106,10 @@ public class PlayerController : MonoBehaviour
             animator.applyRootMotion = true;
 
             if (!animator.GetBool("grounded")) {
-
                 animator.SetBool("grounded", true);              
                 jumping = false;
                 singleJumping = false;
+                forwardMomentum = 0;
             }
         }
         else
@@ -112,7 +118,6 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("grounded", false);
         }
         
-
 
         Color rayColor;
         if (raycastHit.collider != null)
