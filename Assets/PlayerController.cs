@@ -15,7 +15,6 @@ public class PlayerController : MonoBehaviour
     public bool jumping = false;
     public bool singleJumping = false;
     public float groundDistance = 0.01f;
-    public float jumpForce = 500;
     public float fallMultiplier = 1.5f;
 
     [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;  // How much to smooth out the movement
@@ -24,7 +23,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float rigidBodyVelocityX;
     [SerializeField] public float raycastHitDistance;
     [SerializeField] public float forwardMomentum;
+    [SerializeField] public float jumpForce = 700f;
     [SerializeField] public bool isJumping;
+    [SerializeField] public bool rootMotionEnabled;
 
     // Start is called before the first frame update
     void Start()
@@ -36,6 +37,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate() 
     {
+        rootMotionEnabled = animator.applyRootMotion;
         isJumping = jumping;
         rigidBodyVelocityY = rigidbody2D.velocity.y;
         rigidBodyVelocityX = rigidbody2D.velocity.x;
@@ -47,7 +49,7 @@ public class PlayerController : MonoBehaviour
             forwardMomentum = rawSpeed;
             singleJumping = true;
             animator.applyRootMotion = false;
-            rigidbody2D.AddForce(new Vector2(300, jumpForce), ForceMode2D.Force);
+            rigidbody2D.AddForce(new Vector2(100 * rawSpeed, jumpForce), ForceMode2D.Force);
 
 
             //animator.animatePhysics = true;
@@ -61,7 +63,7 @@ public class PlayerController : MonoBehaviour
 
         if (rawSpeed != 0)
         {
-            rigidbody2D.AddForce(new Vector2(300 * rawSpeed, 0), ForceMode2D.Force);
+            rigidbody2D.AddForce(new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
         }
 
         if (singleJumping && forwardMomentum != 0)
@@ -89,7 +91,11 @@ public class PlayerController : MonoBehaviour
             Flip();
         }
 
-        if (Input.GetButtonDown("Jump") && animator.GetBool("grounded"))
+        if (!jumping && Input.GetButtonDown("Jump") 
+            && 
+            animator.GetBool("grounded")
+            && 
+            !singleJumping)
         {
             jumping = true;
             animator.SetTrigger("jump");
@@ -136,7 +142,7 @@ public class PlayerController : MonoBehaviour
     {
         if (rigidbody2D.velocity.y < 0)
         {
-            rigidbody2D.AddForce(new Vector2(800 * rawSpeed, -100), ForceMode2D.Force);
+            rigidbody2D.AddForce(new Vector2(500 * rawSpeed, -100), ForceMode2D.Force);
         }
     }
 
