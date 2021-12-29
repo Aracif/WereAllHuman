@@ -71,7 +71,19 @@ public class PlayerController : MonoBehaviour
             rigidbody2D.AddForce(new Vector2(300 * forwardMomentum, 0), ForceMode2D.Force);
         }
 
-        IsGrounded();
+        if (rigidbody2D.velocity.y > 0.5 )
+        {
+            IsGrounded();
+        }
+        else if (rigidbody2D.velocity.y < .00001)
+        {
+            animator.applyRootMotion = true;
+        }
+        else
+        {
+            fasterFall();
+        }
+
     }
 
     // Update is called once per fram e
@@ -115,12 +127,12 @@ public class PlayerController : MonoBehaviour
                 animator.SetBool("grounded", true);              
                 jumping = false;
                 singleJumping = false;
+                Debug.Log("SingleJump set to false!");
                 forwardMomentum = 0;
             }
         }
         else
         {
-            fasterFall();
             animator.SetBool("grounded", false);
         }
         
@@ -140,9 +152,9 @@ public class PlayerController : MonoBehaviour
 
     void fasterFall()
     {
-        if (rigidbody2D.velocity.y < 0)
+        if (rigidbody2D.velocity.y < 0.4)
         {
-            rigidbody2D.AddForce(new Vector2(500 * rawSpeed, -100), ForceMode2D.Force);
+            rigidbody2D.AddForce(new Vector2(500 * rawSpeed, -160), ForceMode2D.Force);
         }
     }
 
