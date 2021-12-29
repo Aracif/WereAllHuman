@@ -41,8 +41,8 @@ public class PlayerController : MonoBehaviour
         isJumping = jumping;
         rigidBodyVelocityY = rigidbody2D.velocity.y;
         rigidBodyVelocityX = rigidbody2D.velocity.x;
-        
-        
+
+        invalidWalkRotation();
 
         if (jumping && !singleJumping)
         {
@@ -169,4 +169,40 @@ public class PlayerController : MonoBehaviour
         transform.localScale = theScale;
     }
 
+
+    void invalidWalkRotation()
+    {
+        float zRotation = rotationZ();
+        if (zRotation!= 0)
+        {
+            if (zRotation > 15 && zRotation < 345)
+            {
+                animator.applyRootMotion = false;
+                animator.WriteDefaultValues();
+                animator.enabled = false;
+            }
+            else
+            {
+                 animator.applyRootMotion = true;
+                 animator.enabled = true;
+            }
+        }
+
+    }
+
+    float rotationZ()
+    {
+        Debug.Log(string.Format("Z rotation is {0}", UnwrapAngle(transform.localEulerAngles.z)));
+        return UnwrapAngle(transform.localEulerAngles.z);
+    }
+
+    private float UnwrapAngle(float angle)
+    {
+        if (angle >= 0)
+            return angle;
+
+        angle = -angle % 360;
+
+        return 360 - angle;
+    }
 }
