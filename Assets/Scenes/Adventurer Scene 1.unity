@@ -406,7 +406,7 @@ PrefabInstance:
     - target: {fileID: -7672463822197811043, guid: 8ee59c763e1383249a925b33f8a0d75a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.402
       objectReference: {fileID: 0}
     - target: {fileID: -7672463822197811043, guid: 8ee59c763e1383249a925b33f8a0d75a,
         type: 3}
@@ -720,10 +720,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   whatIsGround:
     serializedVersion: 2
-    m_Bits: 2147483647
+    m_Bits: 64
   jumping: 0
   singleJumping: 0
-  groundDistance: 0.4
+  groundDistance: 0.5
   fallMultiplier: 2.5
   m_MovementSmoothing: 0.05
   rawSpeed: 0
@@ -732,7 +732,7 @@ MonoBehaviour:
   raycastHitDistance: 0
   forwardMomentum: 0
   jumpForce: 900
-  isJumping: 0
+  leftGround: 0
   rootMotionEnabled: 0
 --- !u!114 &579360642
 MonoBehaviour:

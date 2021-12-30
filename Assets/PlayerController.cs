@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float raycastHitDistance;
     [SerializeField] public float forwardMomentum;
     [SerializeField] public float jumpForce = 700f;
-    [SerializeField] public bool isJumping;
+    [SerializeField] public bool leftGround;
     [SerializeField] public bool rootMotionEnabled;
 
     // Start is called before the first frame update
@@ -37,53 +37,62 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate() 
     {
-        rootMotionEnabled = animator.applyRootMotion;
-        isJumping = jumping;
-        rigidBodyVelocityY = rigidbody2D.velocity.y;
-        rigidBodyVelocityX = rigidbody2D.velocity.x;
-
-        invalidWalkRotation();
+        //transform.position += animator.deltaPosition;
+        //transform.rotation = animator.deltaRotation * transform.rotation;
+        //invalidWalkRotation();
 
         if (jumping && !singleJumping)
         {
+
             forwardMomentum = rawSpeed;
             singleJumping = true;
-            animator.applyRootMotion = false;
             rigidbody2D.AddForce(new Vector2(100 * rawSpeed, jumpForce), ForceMode2D.Force);
+            if (rawSpeed != 0)
+            {
+                rigidbody2D.AddForce(new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
+            }
 
-
-            //animator.animatePhysics = true;
-            //rigidbody2D.AddForce(Vector3.up * jumpForce);
-            //rigidbody2D.AddForce(new Vector3(1, 1, 0));
-            //rigidbody2D.velocity += new Vector2(4, 7) * 3;
-            //Vector3 targetVelocity = new Vector2(1 * 550f * Time.fixedDeltaTime, rigidbody2D.velocity.y);
-            // And then smoothing it out and applying it to the character
-            //rigidbody2D.velocity = Vector3.SmoothDamp(rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
         }
-
-        if (rawSpeed != 0)
+        else if (singleJumping)
         {
-            rigidbody2D.AddForce(new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
-        }
 
-        if (singleJumping && forwardMomentum != 0)
-        {
-            rigidbody2D.AddForce(new Vector2(300 * forwardMomentum, 0), ForceMode2D.Force);
-        }
 
-        if (rigidbody2D.velocity.y > 0.5 )
-        {
-            IsGrounded();
+            if (movingUpward(15))
+            {
+                leftGround = true;
+                animator.SetBool("grounded", false);
+            }
+            else if (landed() && leftGround)
+            {
+                animator.SetBool("grounded", true);
+                singleJumping = false;
+                jumping = false;
+                leftGround = false;                 
+            }
+            else
+            {
+                if (forwardMomentum != 0)
+                {
+                    rigidbody2D.AddForce(new Vector2(300 * forwardMomentum, 0), ForceMode2D.Force);
+                }
+            }
+            //Allow slight horizontal movement in the air
+            if (rawSpeed != 0)
+            {
+                rigidbody2D.AddForce(new Vector2(150 * rawSpeed, 0), ForceMode2D.Force);
+            }
+            
+            if (!movingUpward(0))
+            {
+                //If the player is falling from a jump accelerate fall rate slightly
+                rigidbody2D.AddForce(new Vector2(25 * rawSpeed, -125), ForceMode2D.Force);
+            }
         }
-        else if (rigidbody2D.velocity.y < .00001)
-        {
-            animator.applyRootMotion = true;
-        }
-        else
-        {
-            fasterFall();
-        }
+    }
 
+    bool movingUpward(float speed)
+    {
+        return rigidbody2D.velocity.y > speed;
     }
 
     // Update is called once per fram e
@@ -103,40 +112,35 @@ public class PlayerController : MonoBehaviour
             Flip();
         }
 
-        if (!jumping && Input.GetButtonDown("Jump") 
-            && 
-            animator.GetBool("grounded")
-            && 
-            !singleJumping)
+        if (jumping == false)
         {
-            jumping = true;
-            animator.SetTrigger("jump");
-        }
+            if (Input.GetButtonDown("Jump"))
+            {
 
-    }
-
-    void IsGrounded()
-    {
-        RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, groundDistance, whatIsGround);
-        raycastHitDistance = raycastHit.distance;
-        if (Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, groundDistance, whatIsGround))
-        {
-            animator.applyRootMotion = true;
-
-            if (!animator.GetBool("grounded")) {
-                animator.SetBool("grounded", true);              
-                jumping = false;
-                singleJumping = false;
-                Debug.Log("SingleJump set to false!");
-                forwardMomentum = 0;
+                RaycastHit2D ray = sendGroundRay();
+                if (ray.collider != null) //We're on the ground!
+                {
+                    jumping = true;
+                    animator.SetTrigger("jump");
+                }
             }
         }
-        else
-        {
-            animator.SetBool("grounded", false);
-        }
-        
+    }
 
+    bool landed()
+    {
+        RaycastHit2D ray = sendGroundRay();
+        if (ray.collider != null)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    RaycastHit2D sendGroundRay()
+    {
+        RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, groundDistance, whatIsGround);
+        raycastHitDistance = raycastHit.distance;     
         Color rayColor;
         if (raycastHit.collider != null)
         {
@@ -146,8 +150,9 @@ public class PlayerController : MonoBehaviour
         {
             rayColor = Color.red;
         }
-
+        //print("Hit: " + raycastHit.collider?.gameObject?.name);
         Debug.DrawRay(boxCollider2D.bounds.center, Vector2.down * (boxCollider2D.bounds.extents.y), rayColor);
+        return raycastHit;
     }
 
     void fasterFall()
@@ -177,14 +182,14 @@ public class PlayerController : MonoBehaviour
         {
             if (zRotation > 15 && zRotation < 345)
             {
-                animator.applyRootMotion = false;
-                animator.WriteDefaultValues();
-                animator.enabled = false;
+                //animator.applyRootMotion = false;
+                //animator.WriteDefaultValues();
+                //animator.enabled = false;
             }
             else
             {
-                 animator.applyRootMotion = true;
-                 animator.enabled = true;
+                 //animator.applyRootMotion = true;
+                 //animator.enabled = true;
             }
         }
 
@@ -192,7 +197,7 @@ public class PlayerController : MonoBehaviour
 
     float rotationZ()
     {
-        Debug.Log(string.Format("Z rotation is {0}", UnwrapAngle(transform.localEulerAngles.z)));
+        //Debug.Log(string.Format("Z rotation is {0}", UnwrapAngle(transform.localEulerAngles.z)));
         return UnwrapAngle(transform.localEulerAngles.z);
     }
 
