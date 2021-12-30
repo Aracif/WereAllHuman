@@ -6,11 +6,20 @@ public class FollowPlayer : MonoBehaviour
     private Camera camera;
     public float smoothing = 10f;
     public Vector3 offset;
+
+    Vector2 velocity;
+    public float smoothTimeY;
+    public float smoothTimeX;
+
+    [SerializeField] private GameObject floatingPoints;
+
+
     // Start is called before the first frame update
     void Start()
     {
         playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
         camera = GetComponent<Camera>();
+        Instantiate(floatingPoints, transform.position, Quaternion.identity);
     }
 
     // Update is called once per frame
@@ -26,10 +35,17 @@ public class FollowPlayer : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        float posX = Mathf.SmoothDamp(transform.position.x, playerTransform.position.x, ref velocity.x, smoothTimeX);
+        float posY = Mathf.SmoothDamp(transform.position.y, playerTransform.position.y, ref velocity.y, smoothTimeY);
+
+        transform.position = new Vector3(posX, posY, transform.position.z);
+    }
     private void LateUpdate()
     {
         //smoothFollow();
-        basicFollow();
+        //basicFollow();
     }
 
     //private void FixedUpdate()

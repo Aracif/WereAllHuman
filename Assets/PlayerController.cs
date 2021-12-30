@@ -27,12 +27,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public bool leftGround;
     [SerializeField] public bool rootMotionEnabled;
 
+
     // Start is called before the first frame update
     void Start()
     {
         animator = GetComponent<Animator>();    
         rigidbody2D = GetComponent<Rigidbody2D>();    
         boxCollider2D = GetComponent<BoxCollider2D>();    
+        
     }
 
     private void FixedUpdate() 
@@ -49,7 +51,7 @@ public class PlayerController : MonoBehaviour
             rigidbody2D.AddForce(new Vector2(100 * rawSpeed, jumpForce), ForceMode2D.Force);
             if (rawSpeed != 0)
             {
-                rigidbody2D.AddForce(new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
+                rigidbody2D.AddRelativeForce(new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
             }
 
         }
@@ -79,13 +81,13 @@ public class PlayerController : MonoBehaviour
             //Allow slight horizontal movement in the air
             if (rawSpeed != 0)
             {
-                rigidbody2D.AddForce(new Vector2(150 * rawSpeed, 0), ForceMode2D.Force);
+                rigidbody2D.AddRelativeForce(new Vector2(150 * rawSpeed, 0), ForceMode2D.Force);
             }
             
             if (!movingUpward(0))
             {
                 //If the player is falling from a jump accelerate fall rate slightly
-                rigidbody2D.AddForce(new Vector2(25 * rawSpeed, -125), ForceMode2D.Force);
+                rigidbody2D.AddRelativeForce(new Vector2(20 * rawSpeed, -100), ForceMode2D.Force);
             }
         }
     }
