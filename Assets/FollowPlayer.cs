@@ -11,7 +11,7 @@ public class FollowPlayer : MonoBehaviour
     public float smoothTimeY;
     public float smoothTimeX;
 
-    [SerializeField] private GameObject floatingPoints;
+    //[SerializeField] private GameObject floatingPoints;
 
 
     // Start is called before the first frame update
@@ -19,7 +19,7 @@ public class FollowPlayer : MonoBehaviour
     {
         playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
         camera = GetComponent<Camera>();
-        Instantiate(floatingPoints, transform.position, Quaternion.identity);
+        //Instantiate(floatingPoints, transform.position, Quaternion.identity);
     }
 
     // Update is called once per frame
