@@ -174,6 +174,18 @@ public class PlayerController : MonoBehaviour
         transform.localScale = theScale;
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        //print("ouch");
+        //print(collision.collider.name);    
+        //print(collision.otherCollider.ToString());
+        if (collision.otherCollider.ToString().Contains("CircleCollider"))
+        {
+            print("ouch");
+            animator.SetTrigger("jumpedUpAndHitPlatform");
+            animator.WriteDefaultValues();
+        }
+    }
 
     void invalidWalkRotation()
     {

@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class FollowPlayer : MonoBehaviour
 {
     private Transform playerTransform;
     private Camera camera;
+    public float smoothing = 10f;
+    public Vector3 offset;
     // Start is called before the first frame update
     void Start()
     {
@@ -28,13 +28,32 @@ public class FollowPlayer : MonoBehaviour
 
     private void LateUpdate()
     {
+        //smoothFollow();
+        basicFollow();
+    }
+
+    //private void FixedUpdate()
+    //{
+    //    smoothFollow();
+    //}
+
+    private void basicFollow()
+    {
         Vector3 temp = transform.position;
 
         temp.x = playerTransform.position.x;
+        temp.y = playerTransform.position.y;
 
         transform.position = temp;
 
     }
 
+    private void smoothFollow()
+    {
+        Vector3 desiredPosition = playerTransform.position + offset;
+        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothing * Time.deltaTime);
+        transform.position = smoothedPosition;
 
+        //transform.LookAt(playerTransform);
+    }
 }
