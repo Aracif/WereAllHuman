@@ -10,6 +10,8 @@ public class PlayerController : MonoBehaviour
     private BoxCollider2D boxCollider2D;
     private Vector3 m_Velocity = Vector3.zero;
     public LayerMask whatIsGround;
+    public GameObject floatingPoints;
+    public TextMesh playersLastActionHUD;
 
     private bool m_FacingRight = false;
     public bool jumping = false;
@@ -33,8 +35,8 @@ public class PlayerController : MonoBehaviour
     {
         animator = GetComponent<Animator>();    
         rigidbody2D = GetComponent<Rigidbody2D>();    
-        boxCollider2D = GetComponent<BoxCollider2D>();    
-        
+        boxCollider2D = GetComponent<BoxCollider2D>();
+        playersLastActionHUD = GameObject.Find("HUDPlayerAction").GetComponent<TextMesh>();
     }
 
     private void FixedUpdate() 
@@ -45,7 +47,8 @@ public class PlayerController : MonoBehaviour
 
         if (jumping && !singleJumping)
         {
-
+            Instantiate(floatingPoints, transform.position, Quaternion.identity);
+            playersLastActionHUD.text = "single jump";
             forwardMomentum = rawSpeed;
             singleJumping = true;
             rigidbody2D.AddForce(new Vector2(100 * rawSpeed, jumpForce), ForceMode2D.Force);
@@ -69,7 +72,7 @@ public class PlayerController : MonoBehaviour
                 animator.SetBool("grounded", true);
                 singleJumping = false;
                 jumping = false;
-                leftGround = false;                 
+                leftGround = false;
             }
             else
             {
@@ -121,7 +124,7 @@ public class PlayerController : MonoBehaviour
 
                 RaycastHit2D ray = sendGroundRay();
                 if (ray.collider != null) //We're on the ground!
-                {
+                {               
                     jumping = true;
                     animator.SetTrigger("jump");
                 }
