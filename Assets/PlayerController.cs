@@ -41,6 +41,9 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate() 
     {
+        //GameObject points = Instantiate(floatingPoints, transform.position, Quaternion.identity) as GameObject;
+        //floatingPoints.transform.GetChild(0).GetComponent<TextMesh>();
+        //collision.gameObject.GetComponent<PlayerActionPopupTextHandler>();
         //transform.position += animator.deltaPosition;
         //transform.rotation = animator.deltaRotation * transform.rotation;
         //invalidWalkRotation();
@@ -104,9 +107,31 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
 
-        rawSpeed = Input.GetAxis("Horizontal");
+        if (animator.GetBool("walkingOnly") && Input.GetAxis("Horizontal")==0)
+        {
+            animator.SetFloat("speed", Mathf.Abs(1));
+        }
+        else
+        {
+            rawSpeed = Input.GetAxis("Horizontal");
+            animator.SetBool("walkingOnly", false);
+            animator.SetFloat("speed", Mathf.Abs(rawSpeed));
+        }
 
-        animator.SetFloat("speed", Mathf.Abs(rawSpeed));
+
+        //if (rawSpeed > 0)
+        //{
+        //    animator.SetBool("walkingOnly", false);
+        //    animator.SetFloat("speed", Mathf.Abs(rawSpeed));
+        //}
+        //else if(animator.GetBool("walkingOnly"))
+        //{
+        //    animator.SetFloat("speed", Mathf.Abs(1));
+        //}
+        //else
+        //{
+        //    animator.SetFloat("speed", Mathf.Abs(0));
+        //}
 
         if (rawSpeed < 0.0 && !m_FacingRight)
         {
@@ -131,6 +156,18 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    public void startedWalking()
+    {
+        playersLastActionHUD.text = "walking";
+    }
+
+
+    public void startedRunning()
+    {
+        playersLastActionHUD.text = "running";
+    }
+
 
     bool landed()
     {
