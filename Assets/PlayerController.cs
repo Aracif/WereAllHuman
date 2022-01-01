@@ -163,12 +163,17 @@ public class PlayerController : MonoBehaviour
 
         if (isGrabbing)
         {
+            animator.SetBool("wallGrab", true);
             rigidbody2D.gravityScale = 0;
             rigidbody2D.velocity = Vector2.zero;
+            rigidbody2D.angularVelocity = 0;
+            rigidbody2D.isKinematic = true;
         }
         else
         {
             rigidbody2D.gravityScale = defaultGravity;
+            animator.SetBool("wallGrab", false);
+            rigidbody2D.isKinematic = false;
         }
     }
 
