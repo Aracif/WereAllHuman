@@ -10,16 +10,21 @@ public class PlayerController : MonoBehaviour
     private BoxCollider2D boxCollider2D;
     private Vector3 m_Velocity = Vector3.zero;
     public LayerMask whatIsGround;
+    public LayerMask climbableWall;
+    public Transform wallGrabPoint;
     public GameObject floatingPoints;
     public TextMesh playersLastActionHUD;
 
+    public bool canGrab;
+    public bool isGrabbing;
     private bool m_FacingRight = false;
     public bool jumping = false;
     public bool singleJumping = false;
     public float groundDistance = 0.01f;
     public float fallMultiplier = 1.5f;
+    private float defaultGravity;
 
-    [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;  // How much to smooth out the movement
+    [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .5f;  // How much to smooth out the movement
     [SerializeField] public float rawSpeed;
     [SerializeField] public float rigidBodyVelocityY;
     [SerializeField] public float rigidBodyVelocityX;
@@ -37,6 +42,7 @@ public class PlayerController : MonoBehaviour
         rigidbody2D = GetComponent<Rigidbody2D>();    
         boxCollider2D = GetComponent<BoxCollider2D>();
         playersLastActionHUD = GameObject.Find("HUDPlayerAction").GetComponent<TextMesh>();
+        defaultGravity = rigidbody2D.gravityScale;
     }
 
     private void FixedUpdate() 
@@ -119,20 +125,6 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        //if (rawSpeed > 0)
-        //{
-        //    animator.SetBool("walkingOnly", false);
-        //    animator.SetFloat("speed", Mathf.Abs(rawSpeed));
-        //}
-        //else if(animator.GetBool("walkingOnly"))
-        //{
-        //    animator.SetFloat("speed", Mathf.Abs(1));
-        //}
-        //else
-        //{
-        //    animator.SetFloat("speed", Mathf.Abs(0));
-        //}
-
         if (rawSpeed < 0.0 && !m_FacingRight)
         {
             Flip();
@@ -155,6 +147,49 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+
+        canGrab = Physics2D.OverlapCircle(wallGrabPoint.position, .6f, climbableWall);
+
+        isGrabbing = false;
+
+        if (canGrab && singleJumping)
+        {
+            if ((facingRight() && inputRight()) || (facingLeft() && inputLeft()))
+            {
+                playersLastActionHUD.text = "climbing";
+                isGrabbing = true;
+            }
+        }
+
+        if (isGrabbing)
+        {
+            rigidbody2D.gravityScale = 0;
+            rigidbody2D.velocity = Vector2.zero;
+        }
+        else
+        {
+            rigidbody2D.gravityScale = defaultGravity;
+        }
+    }
+
+    public bool facingLeft()
+    {
+        return transform.localScale.x == -1f;
+    }
+    
+    public bool facingRight()
+    {
+        return transform.localScale.x == 1f;
+    }
+
+    public bool inputRight()
+    {
+        return Input.GetAxisRaw("Horizontal") > 0;
+    }
+       
+    public bool inputLeft()
+    {
+        return Input.GetAxisRaw("Horizontal") < 0;
     }
 
     public void startedWalking()
@@ -179,6 +214,11 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    bool collidedWithWall()
+    {
+        //Physics2D.OverlapCircle
+        return false;
+    }
     RaycastHit2D sendGroundRay()
     {
         RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, groundDistance, whatIsGround);
