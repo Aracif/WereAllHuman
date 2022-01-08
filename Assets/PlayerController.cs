@@ -198,7 +198,6 @@ public class PlayerController : MonoBehaviour
         else
         {
             rawSpeed = Input.GetAxis("Horizontal");
-            //print(rawSpeed);
             animator.SetBool("walkingOnly", false);
             animator.SetFloat("speed", Mathf.Abs(rawSpeed));
         }
@@ -261,19 +260,13 @@ public class PlayerController : MonoBehaviour
                     animator.SetBool("wallGrab", false);
                     rigidBodyWallJumping = true;
                     wallJumping = false;
-                    animator.speed = 1;
                 }
 
             }
-            else if (rigidBodyWallJumping)
-            {
-                //rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 100, 50), ForceMode2D.Force);
-            }
-            else
+            else if (!rigidBodyWallJumping)
             {
                 rigidbody2D.gravityScale = defaultGravity;
                 animator.SetBool("wallGrab", false);
-                animator.speed = 1;
                 rigidbody2D.isKinematic = false;
                 rigidBodyWallJumping = false;
                 wallJumping = false;
@@ -338,11 +331,6 @@ public class PlayerController : MonoBehaviour
         playersLastActionHUD.text = "running";
     }
 
-    public void pauseWallGrab()
-    {
-        print("paused anim");
-        animator.speed = 0;
-    }
 
     bool landed()
     {
