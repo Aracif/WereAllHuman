@@ -1155,15 +1155,21 @@ MonoBehaviour:
   isGrabbing: 0
   jumping: 0
   singleJumping: 0
+  wallJumping: 0
+  rigidBodyWallJumping: 0
   groundDistance: 0.5
   fallMultiplier: 2.5
+  wallJumpCounter: 0
+  groundedCounter: 0
+  wallJumpTime: 0.2
+  groundedTime: 0.2
   m_MovementSmoothing: 0.05
   rawSpeed: 0
   rigidBodyVelocityY: 0
   rigidBodyVelocityX: 0
   raycastHitDistance: 0
   forwardMomentum: 0
-  jumpForce: 900
+  jumpForce: 1150
   leftGround: 0
   rootMotionEnabled: 0
 --- !u!114 &579360642

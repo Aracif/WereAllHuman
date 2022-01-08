@@ -20,10 +20,19 @@ public class PlayerController : MonoBehaviour
     private bool m_FacingRight = false;
     public bool jumping = false;
     public bool singleJumping = false;
+    public bool wallJumping = false;
+    public bool rigidBodyWallJumping = false;
     public float groundDistance = 0.01f;
     public float fallMultiplier = 1.5f;
     private float defaultGravity;
+    public float wallJumpCounter;
+    public float groundedCounter;
+    public float walljumpHangtimeCounter;
+    
 
+    [SerializeField] public float wallJumpTime = .2f;
+    [SerializeField] public float groundedTime = .02f;
+    [SerializeField] public float walljumpHangtime = .2f;
     [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .5f;  // How much to smooth out the movement
     [SerializeField] public float rawSpeed;
     [SerializeField] public float rigidBodyVelocityY;
@@ -54,6 +63,29 @@ public class PlayerController : MonoBehaviour
         //transform.rotation = animator.deltaRotation * transform.rotation;
         //invalidWalkRotation();
 
+        if (jumping && groundedCounter <= 0)
+        {
+            if (landed())
+            {
+                print("Landed.");
+                animator.SetBool("grounded", true);
+                singleJumping = false;
+                jumping = false;
+                leftGround = false;
+                rigidBodyWallJumping = false;
+                animator.SetBool("landedAnimator", true);
+            }
+        }
+        else
+        {
+            groundedCounter -= Time.deltaTime;
+        }
+
+
+        if (movingUpward(10))
+        {
+            //print("Yes, houston");
+        }
         if (jumping && !singleJumping)
         {
             Instantiate(floatingPoints, transform.position, Quaternion.identity);
@@ -67,7 +99,7 @@ public class PlayerController : MonoBehaviour
             }
 
         }
-        else if (singleJumping)
+        else if (singleJumping && !rigidBodyWallJumping)
         {
 
 
@@ -76,7 +108,7 @@ public class PlayerController : MonoBehaviour
                 leftGround = true;
                 animator.SetBool("grounded", false);
             }
-            else if (landed() && leftGround)
+            else if (landed() && leftGround || landed() && Input.GetButtonDown("Jump"))
             {
                 animator.SetBool("grounded", true);
                 singleJumping = false;
@@ -88,20 +120,52 @@ public class PlayerController : MonoBehaviour
                 if (forwardMomentum != 0)
                 {
                     rigidbody2D.AddForce(new Vector2(300 * forwardMomentum, 0), ForceMode2D.Force);
+                    //print("Forward Momentum");
                 }
             }
             //Allow slight horizontal movement in the air
-            if (rawSpeed != 0)
-            {
-                rigidbody2D.AddRelativeForce(new Vector2(150 * rawSpeed, 0), ForceMode2D.Force);
-            }
+
             
             if (!movingUpward(0))
             {
                 //If the player is falling from a jump accelerate fall rate slightly
-                rigidbody2D.AddRelativeForce(new Vector2(20 * rawSpeed, -100), ForceMode2D.Force);
+                rigidbody2D.AddRelativeForce(new Vector2(0, -130), ForceMode2D.Force);
             }
         }
+
+        if (rigidBodyWallJumping)
+        {
+            if (walljumpHangtimeCounter <= 0)
+            {
+                rigidbody2D.AddRelativeForce(new Vector2(375 * rawSpeed, 0), ForceMode2D.Force);
+
+            }
+            else
+            {
+                walljumpHangtimeCounter -= Time.deltaTime;
+
+                if (rawSpeed > 0 && facingRight() && rigidbody2D.velocity.x < 0 || rawSpeed < 0 && facingLeft() && rigidbody2D.velocity.x > 0)
+                {
+                    rigidbody2D.AddRelativeForce(-new Vector2(200 * rawSpeed, 0), ForceMode2D.Force);
+                }
+                else if (rawSpeed > 0 && facingRight() || rawSpeed < 0 && facingLeft())
+                {
+                    rigidbody2D.AddRelativeForce(new Vector2(350 * rawSpeed, 0), ForceMode2D.Force);
+                }
+            }
+
+        }
+        else if (singleJumping)
+        {
+            if (rawSpeed != 0)
+            {
+                rigidbody2D.AddRelativeForce(new Vector2(250 * rawSpeed, 0), ForceMode2D.Force);
+            }
+        }
+
+         wallGrabPhysics();
+
+
     }
 
     bool movingUpward(float speed)
@@ -109,21 +173,126 @@ public class PlayerController : MonoBehaviour
         return rigidbody2D.velocity.y > speed;
     }
 
-    // Update is called once per fram e
-    void Update()
+    void jumpInput()
     {
+        if (jumping == false)
+        {
+            if (Input.GetButtonDown("Jump"))
+            {
 
-        if (animator.GetBool("walkingOnly") && Input.GetAxis("Horizontal")==0)
+                RaycastHit2D ray = sendGroundRay();
+                if (ray.collider != null) //We're on the ground!
+                {
+                    jumping = true;
+                    animator.SetBool("landedAnimator", false);
+                    animator.SetTrigger("jump");
+                    groundedCounter = groundedTime;
+                }
+            }
+        }
+    }
+
+    void runInput()
+    {
+        if (animator.GetBool("walkingOnly") && Input.GetAxis("Horizontal") == 0)
         {
             animator.SetFloat("speed", Mathf.Abs(1));
         }
         else
         {
             rawSpeed = Input.GetAxis("Horizontal");
+            //print(rawSpeed);
             animator.SetBool("walkingOnly", false);
             animator.SetFloat("speed", Mathf.Abs(rawSpeed));
         }
+    }
 
+    void wallGrabInput()
+    {
+        canGrab = Physics2D.OverlapCircle(wallGrabPoint.position, .4f, climbableWall);
+
+        isGrabbing = false;
+
+        if (canGrab && singleJumping)
+        {
+            if ((facingRight() && inputRight()) || (facingLeft() && inputLeft()))
+            {
+                playersLastActionHUD.text = "climbing";
+                isGrabbing = true;
+                if (Input.GetButtonDown("Jump") )
+                {
+                    wallJumping = true;
+                }
+            }
+        }
+    }
+
+    void wallGrabPhysics()
+    {
+        if (wallJumpCounter <= 0)
+        {
+            if (isGrabbing)
+            {
+                animator.SetBool("wallGrab", true);
+                rigidbody2D.gravityScale = 0;
+                rigidbody2D.velocity = Vector2.zero;
+                rigidbody2D.angularVelocity = 0;
+                rigidbody2D.isKinematic = true;
+                rigidBodyWallJumping = false;
+
+                //TODO             
+                //Have to figure this out need to pull this key press out of physics engine!
+                if (wallJumping)
+                {
+
+                    rigidbody2D.gravityScale = defaultGravity;
+                    rigidbody2D.isKinematic = false;
+
+                    //rigidbody2D.velocity = new Vector2(-100, 2);
+                    float v = rawSpeed * .7f * .5f;
+                    float h = v - rigidbody2D.velocity.x;
+                    float horizChange = Mathf.Clamp(h, -.2f, .001f);
+                    rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 2500, 700), ForceMode2D.Force);
+
+                    print("clamped at " + horizChange);
+                    //rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x + horizChange, rigidbody2D.velocity.y);
+                    //print("wall jump");
+
+                    wallJumpCounter = wallJumpTime;
+                    walljumpHangtimeCounter = walljumpHangtime;
+                    isGrabbing = false;
+                    animator.SetBool("wallGrab", false);
+                    rigidBodyWallJumping = true;
+                    wallJumping = false;
+                }
+
+            }
+            else if (rigidBodyWallJumping)
+            {
+                //rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 100, 50), ForceMode2D.Force);
+            }
+            else
+            {
+                rigidbody2D.gravityScale = defaultGravity;
+                animator.SetBool("wallGrab", false);
+                animator.speed = 1;
+                rigidbody2D.isKinematic = false;
+                rigidBodyWallJumping = false;
+                wallJumping = false;
+            }
+        }
+        else
+        {
+            rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 100, 50), ForceMode2D.Force);
+            wallJumpCounter -= Time.fixedDeltaTime;
+        }
+
+    }
+
+    // Update is called once per fram e
+    void Update()
+    {
+        runInput();
 
         if (rawSpeed < 0.0 && !m_FacingRight)
         {
@@ -134,47 +303,9 @@ public class PlayerController : MonoBehaviour
             Flip();
         }
 
-        if (jumping == false)
-        {
-            if (Input.GetButtonDown("Jump"))
-            {
+        wallGrabInput();
 
-                RaycastHit2D ray = sendGroundRay();
-                if (ray.collider != null) //We're on the ground!
-                {               
-                    jumping = true;
-                    animator.SetTrigger("jump");
-                }
-            }
-        }
-
-        canGrab = Physics2D.OverlapCircle(wallGrabPoint.position, .6f, climbableWall);
-
-        isGrabbing = false;
-
-        if (canGrab && singleJumping)
-        {
-            if ((facingRight() && inputRight()) || (facingLeft() && inputLeft()))
-            {
-                playersLastActionHUD.text = "climbing";
-                isGrabbing = true;
-            }
-        }
-
-        if (isGrabbing)
-        {
-            animator.SetBool("wallGrab", true);
-            rigidbody2D.gravityScale = 0;
-            rigidbody2D.velocity = Vector2.zero;
-            rigidbody2D.angularVelocity = 0;
-            rigidbody2D.isKinematic = true;
-        }
-        else
-        {
-            rigidbody2D.gravityScale = defaultGravity;
-            animator.SetBool("wallGrab", false);
-            rigidbody2D.isKinematic = false;
-        }
+        jumpInput();
     }
 
     public bool facingLeft()
@@ -208,6 +339,11 @@ public class PlayerController : MonoBehaviour
         playersLastActionHUD.text = "running";
     }
 
+    public void pauseWallGrab()
+    {
+        //print("paused anim");
+        animator.speed = 0;
+    }
 
     bool landed()
     {
@@ -250,6 +386,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     private void Flip()
     {
         // Switch the way the player is labelled as facing.
@@ -266,9 +403,9 @@ public class PlayerController : MonoBehaviour
         //print("ouch");
         //print(collision.collider.name);    
         //print(collision.otherCollider.ToString());
-        if (collision.otherCollider.ToString().Contains("CircleCollider"))
+        if (collision.otherCollider.ToString().Contains("CircleCollider") && !isGrabbing)
         {
-            print("ouch");
+            //print("ouch");
             animator.SetTrigger("jumpedUpAndHitPlatform");
             animator.WriteDefaultValues();
         }
