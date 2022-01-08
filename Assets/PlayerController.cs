@@ -55,6 +55,39 @@ public class PlayerController : MonoBehaviour
         defaultGravity = rigidbody2D.gravityScale;
     }
 
+    // Update is called once per fram e
+    void Update()
+    {
+        animatorTesting();
+
+        runInput();
+
+        if (rawSpeed < 0.0 && !m_FacingRight)
+        {
+            Flip();
+        }
+        else if (rawSpeed > 0.0 && m_FacingRight)
+        {
+            Flip();
+        }
+
+        wallGrabInput();
+
+        jumpInput();
+    }
+
+    private void animatorTesting()
+    {
+        print(animator.GetCurrentAnimatorStateInfo(0).ToString());
+        if (isLedgeGrabbing)
+        {
+            animator.SetTrigger("ledgeClimb");
+            //animator.ResetTrigger("ledgeClimb");
+        }
+        print(animator.GetCurrentAnimatorStateInfo(0).IsName("Ledge Climb"));
+        //GetComponent<LedgeGrab>().changePosition();
+    }
+
     private void FixedUpdate() 
     {
         //GameObject points = Instantiate(floatingPoints, transform.position, Quaternion.identity) as GameObject;
@@ -280,24 +313,6 @@ public class PlayerController : MonoBehaviour
 
     }
 
-    // Update is called once per fram e
-    void Update()
-    {
-        runInput();
-
-        if (rawSpeed < 0.0 && !m_FacingRight)
-        {
-            Flip();
-        }
-        else if (rawSpeed > 0.0 && m_FacingRight)
-        {
-            Flip();
-        }
-
-        wallGrabInput();
-
-        jumpInput();
-    }
 
     public bool facingLeft()
     {

@@ -28,17 +28,23 @@ public class LedgeGrab : MonoBehaviour
             PlayerController.isLedgeGrabbing = true;
             print("grabbedeeem");
         }
-        else
-        {
-            rigidbody2D.gravityScale = startingGrav;
-            PlayerController.isLedgeGrabbing = false;
-        }
+
 
         if (PlayerController.isLedgeGrabbing)
         {
             rigidbody2D.velocity = new Vector2(0f, 0f);
             rigidbody2D.gravityScale = 0f;
+            rigidbody2D.isKinematic = true;
         }
+    }
+    public void changePosition()
+    {
+        //transform.position = new Vector2(transform.position.x + (2f * transform.localScale.x), transform.position.y + 3f);
+        rigidbody2D.gravityScale = startingGrav;
+        PlayerController.isLedgeGrabbing = false;
+        rigidbody2D.isKinematic = false;
+        GetComponent<Animator>().SetBool("ledgeClimb", false);
+
     }
 
     private void OnDrawGizmosSelected()
