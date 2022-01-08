@@ -15,13 +15,17 @@ public class PlayerController : MonoBehaviour
     public GameObject floatingPoints;
     public TextMesh playersLastActionHUD;
 
-    public bool canGrab;
-    public bool isGrabbing;
+    [SerializeField] public static bool canWallGrab;
+    [SerializeField] public static bool isLedgeGrabbing;
+    [SerializeField] public static bool isGrabbing;
+    [SerializeField] public static bool jumping = false;
+    [SerializeField] public static bool singleJumping = false;
+    [SerializeField] public static bool wallJumping = false;
+    [SerializeField] public static bool rigidBodyWallJumping = false;
+    [SerializeField] public static bool leftGround;
+
     private bool m_FacingRight = false;
-    public bool jumping = false;
-    public bool singleJumping = false;
-    public bool wallJumping = false;
-    public bool rigidBodyWallJumping = false;
+
     public float groundDistance = 0.01f;
     public float fallMultiplier = 1.5f;
     private float defaultGravity;
@@ -33,15 +37,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float wallJumpTime = .2f;
     [SerializeField] public float groundedTime = .02f;
     [SerializeField] public float walljumpHangtime = .2f;
-    [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .5f;  // How much to smooth out the movement
     [SerializeField] public float rawSpeed;
     [SerializeField] public float rigidBodyVelocityY;
     [SerializeField] public float rigidBodyVelocityX;
     [SerializeField] public float raycastHitDistance;
     [SerializeField] public float forwardMomentum;
     [SerializeField] public float jumpForce = 700f;
-    [SerializeField] public bool leftGround;
-    [SerializeField] public bool rootMotionEnabled;
 
 
     // Start is called before the first frame update
@@ -67,13 +68,13 @@ public class PlayerController : MonoBehaviour
         {
             if (landed())
             {
-                print("Landed.");
                 animator.SetBool("grounded", true);
+                animator.SetBool("landedAnimator", true);
+
                 singleJumping = false;
                 jumping = false;
                 leftGround = false;
                 rigidBodyWallJumping = false;
-                animator.SetBool("landedAnimator", true);
             }
         }
         else
@@ -82,10 +83,6 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        if (movingUpward(10))
-        {
-            //print("Yes, houston");
-        }
         if (jumping && !singleJumping)
         {
             Instantiate(floatingPoints, transform.position, Quaternion.identity);
@@ -209,11 +206,11 @@ public class PlayerController : MonoBehaviour
 
     void wallGrabInput()
     {
-        canGrab = Physics2D.OverlapCircle(wallGrabPoint.position, .4f, climbableWall);
+        canWallGrab = Physics2D.OverlapCircle(wallGrabPoint.position, .4f, climbableWall);
 
         isGrabbing = false;
 
-        if (canGrab && singleJumping)
+        if (canWallGrab && singleJumping)
         {
             if ((facingRight() && inputRight()) || (facingLeft() && inputLeft()))
             {
@@ -252,9 +249,9 @@ public class PlayerController : MonoBehaviour
                     float v = rawSpeed * .7f * .5f;
                     float h = v - rigidbody2D.velocity.x;
                     float horizChange = Mathf.Clamp(h, -.2f, .001f);
-                    rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 2500, 700), ForceMode2D.Force);
+                    rigidbody2D.AddForce(new Vector2(-Input.GetAxisRaw("Horizontal") * 2700, 800), ForceMode2D.Force);
 
-                    print("clamped at " + horizChange);
+                    //print("clamped at " + horizChange);
                     //rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x + horizChange, rigidbody2D.velocity.y);
                     //print("wall jump");
 
@@ -264,6 +261,7 @@ public class PlayerController : MonoBehaviour
                     animator.SetBool("wallGrab", false);
                     rigidBodyWallJumping = true;
                     wallJumping = false;
+                    animator.speed = 1;
                 }
 
             }
@@ -331,6 +329,7 @@ public class PlayerController : MonoBehaviour
     public void startedWalking()
     {
         playersLastActionHUD.text = "walking";
+        animator.speed = 1;
     }
 
 
@@ -341,7 +340,7 @@ public class PlayerController : MonoBehaviour
 
     public void pauseWallGrab()
     {
-        //print("paused anim");
+        print("paused anim");
         animator.speed = 0;
     }
 
@@ -355,11 +354,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    bool collidedWithWall()
-    {
-        //Physics2D.OverlapCircle
-        return false;
-    }
+
     RaycastHit2D sendGroundRay()
     {
         RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, groundDistance, whatIsGround);
