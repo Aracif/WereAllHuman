@@ -39,7 +39,7 @@ public class LedgeGrab : MonoBehaviour
     }
     public void changePosition()
     {
-        //transform.position = new Vector2(transform.position.x + (2f * transform.localScale.x), transform.position.y + 3f);
+        transform.position = new Vector2(transform.position.x + (2f * transform.localScale.x), transform.position.y + 3f);
         rigidbody2D.gravityScale = startingGrav;
         PlayerController.isLedgeGrabbing = false;
         rigidbody2D.isKinematic = false;
