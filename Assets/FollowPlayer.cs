@@ -17,7 +17,7 @@ public class FollowPlayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        playerTransform = GameObject.FindGameObjectWithTag("PlayerV2").transform;
         camera = GetComponent<Camera>();
         //Instantiate(floatingPoints, transform.position, Quaternion.identity);
     }

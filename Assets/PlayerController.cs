@@ -78,13 +78,13 @@ public class PlayerController : MonoBehaviour
 
     private void animatorTesting()
     {
-        print(animator.GetCurrentAnimatorStateInfo(0).ToString());
+        //print(animator.GetCurrentAnimatorStateInfo(0).ToString());
         if (isLedgeGrabbing)
         {
             animator.SetTrigger("ledgeClimb");
             //animator.ResetTrigger("ledgeClimb");
         }
-        print(animator.GetCurrentAnimatorStateInfo(0).IsName("Ledge Climb"));
+        //print(animator.GetCurrentAnimatorStateInfo(0).IsName("Ledge Climb"));
         //GetComponent<LedgeGrab>().changePosition();
     }
 
