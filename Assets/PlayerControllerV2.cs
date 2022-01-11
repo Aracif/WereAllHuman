@@ -7,14 +7,17 @@ public class PlayerControllerV2 : MonoBehaviour
     private Rigidbody2D rigidbody2D;
     private BoxCollider2D boxCollider2D;
     public LayerMask whatIsGround;
-    [SerializeField] public float raycastHitDistance;
 
-    public bool isKinematic = false;
-    public float rawSpeed;
     private bool m_FacingRight = false;
+    public bool isKinematic = false;
     public bool grounded = true;
+    public bool playerGroundRayHit = true;
     public float groundedCounter;
     public float groundedCheckWaitTime = 0.2f;
+    public float rawSpeed;
+
+    [SerializeField] public float raycastHitDistance;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -28,12 +31,11 @@ public class PlayerControllerV2 : MonoBehaviour
     {
         if (rawSpeed != 0 && !grounded && !rigidbody2D.isKinematic)
         {
-            //rigidbody2D.isKinematic = false;
-            rigidbody2D.AddRelativeForce(new Vector2(40 * rawSpeed, 0), ForceMode2D.Force);
+            rigidbody2D.AddRelativeForce(new Vector2(10 * rawSpeed, 0), ForceMode2D.Force);
         }
         else if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic)
         {
-            rigidbody2D.velocity = new Vector2(3, 0) * rawSpeed;
+            rigidbody2D.velocity = new Vector2(9, 0) * rawSpeed;
         }
         if (isKinematic)
         {
@@ -43,12 +45,19 @@ public class PlayerControllerV2 : MonoBehaviour
         {
             rigidbody2D.isKinematic = false;
         }
+
+        if (playerGroundRayHit && rigidbody2D.isKinematic)
+        {
+            rigidbody2D.isKinematic = false;
+        }
+
     }
     // Update is called once per frame
     void Update()
     {
         rawSpeed = Input.GetAxis("Horizontal");
         animator.SetFloat("speed", Mathf.Abs(rawSpeed));
+        playerGroundRayHit = sendGroundRay().collider != null;
 
         if (rawSpeed < 0.0 && !m_FacingRight)
         {
@@ -59,14 +68,21 @@ public class PlayerControllerV2 : MonoBehaviour
             Flip();
         }
         jumpInput();
+
+        if (playerGroundRayHit && rigidbody2D.isKinematic)
+        {
+            rigidbody2D.isKinematic = false;
+            isKinematic = false;
+        }
     }
 
     public void setKinematic(string val)
     {
         isKinematic = bool.Parse(val);
+
         if (!isKinematic)
         {
-            animator.SetBool("grounded", true);
+            animator.SetBool("jump", false);
         }
     }
     void jumpInput() 
@@ -79,29 +95,28 @@ public class PlayerControllerV2 : MonoBehaviour
             if (!wasGrounded && grounded)
             {
                 animator.SetBool("grounded", true);
+                isKinematic = false;
+                if (animator.GetBool("jump"))
+                {
+                    animator.SetBool("jump", false);
+                }
             }
             
-            print(grounded);
             if (Input.GetButtonDown("Jump") && grounded)
             {
                 animator.SetBool("jump", true);
                 animator.SetBool("grounded", false);
-
                 groundedCounter = groundedCheckWaitTime;
-
             }
-            else if (!grounded)
+            else if (!playerGroundRayHit)
             {
-                animator.SetBool("jump", false);
+                animator.SetBool("grounded", false);
             }
         }
         else
         {
             groundedCounter -= Time.deltaTime;
         }
-
-
-
         
     }
 
@@ -121,7 +136,7 @@ public class PlayerControllerV2 : MonoBehaviour
 
     RaycastHit2D sendGroundRay()
     {
-        RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, .01f, whatIsGround);
+        RaycastHit2D raycastHit = Physics2D.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, .3f, whatIsGround);
         raycastHitDistance = raycastHit.distance;
         Color rayColor;
         if (raycastHit.collider != null)
