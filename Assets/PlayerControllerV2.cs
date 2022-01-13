@@ -29,6 +29,29 @@ public class PlayerControllerV2 : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isFalling())
+        {
+            animator.SetBool("falling", true);
+        }
+        else
+        {
+            animator.SetBool("falling", false);
+        }
+
+        //if (playerGroundRayHit && rigidbody2D.isKinematic)
+        //{
+        //    rigidbody2D.isKinematic = false;
+        //}
+
+        //if (isKinematic)
+        //{
+        //    rigidbody2D.isKinematic = true;
+        //}
+        //else
+        //{
+        //    rigidbody2D.isKinematic = false;
+        //}
+
         if (rawSpeed != 0 && !grounded && !rigidbody2D.isKinematic)
         {
             rigidbody2D.AddRelativeForce(new Vector2(10 * rawSpeed, 0), ForceMode2D.Force);
@@ -37,19 +60,9 @@ public class PlayerControllerV2 : MonoBehaviour
         {
             rigidbody2D.velocity = new Vector2(9, 0) * rawSpeed;
         }
-        if (isKinematic)
-        {
-            rigidbody2D.isKinematic = true;
-        }
-        else
-        {
-            rigidbody2D.isKinematic = false;
-        }
 
-        if (playerGroundRayHit && rigidbody2D.isKinematic)
-        {
-            rigidbody2D.isKinematic = false;
-        }
+
+
 
     }
     // Update is called once per frame
@@ -69,49 +82,78 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         jumpInput();
 
-        if (playerGroundRayHit && rigidbody2D.isKinematic)
-        {
-            rigidbody2D.isKinematic = false;
-            isKinematic = false;
-        }
+        //if (playerGroundRayHit && rigidbody2D.isKinematic)
+        //{
+        //    rigidbody2D.isKinematic = false;
+        //    isKinematic = false;
+        //}
     }
 
     public void setKinematic(string val)
     {
         isKinematic = bool.Parse(val);
-
-        if (!isKinematic)
-        {
-            animator.SetBool("jump", false);
-        }
+        rigidbody2D.isKinematic = isKinematic;
+        //if (!isKinematic)
+        //{
+        //    animator.SetBool("jump", false);
+        //}
     }
     void jumpInput() 
     {
+        bool wasGrounded = grounded;
+        grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
+
+        if (Input.GetButtonDown("Jump") && grounded)
+        {
+            //isKinematic = true;
+            rigidbody2D.isKinematic = true;
+            animator.SetBool("jump", true);
+        }
+        
+        if (!wasGrounded && grounded)
+        {
+            animator.SetBool("grounded", true);
+            
+            if (animator.GetBool("jump"))
+            {
+                animator.SetBool("jump", false);
+            }
+        }
+        else if (wasGrounded && !grounded)
+        {
+            animator.SetBool("grounded", false);
+
+        }
+
         if (groundedCounter <= 0)
         {
-            bool wasGrounded = grounded;
-            grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
+            //bool wasGrounded = grounded;
+            //grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
 
-            if (!wasGrounded && grounded)
-            {
-                animator.SetBool("grounded", true);
-                isKinematic = false;
-                if (animator.GetBool("jump"))
-                {
-                    animator.SetBool("jump", false);
-                }
-            }
+            //if (!wasGrounded && grounded)
+            //{
+            //    animator.SetBool("grounded", true);
+            //    isKinematic = false;
+            //    if (animator.GetBool("jump"))
+            //    {
+            //        animator.SetBool("jump", false);
+            //    }
+            //}
+            //else if (wasGrounded && !grounded)
+            //{
+            //    animator.SetBool("grounded", false);
+            //}
             
-            if (Input.GetButtonDown("Jump") && grounded)
-            {
-                animator.SetBool("jump", true);
-                animator.SetBool("grounded", false);
-                groundedCounter = groundedCheckWaitTime;
-            }
-            else if (!playerGroundRayHit)
-            {
-                animator.SetBool("grounded", false);
-            }
+            //if (Input.GetButtonDown("Jump") && grounded)
+            //{
+            //    animator.SetBool("jump", true);
+            //    //animator.SetBool("grounded", false);
+            //    groundedCounter = groundedCheckWaitTime;
+            //}
+            //else if (!playerGroundRayHit)
+            //{
+            //    animator.SetBool("grounded", false);
+            //}
         }
         else
         {
@@ -120,6 +162,10 @@ public class PlayerControllerV2 : MonoBehaviour
         
     }
 
+    bool isFalling()
+    {
+        return rigidbody2D.velocity.y < -1f;
+    }
 
     void OnAnimatorMove()
     {
