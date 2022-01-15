@@ -6,11 +6,14 @@ public class PlayerControllerV2 : MonoBehaviour
     private Animator animator;
     private Rigidbody2D rigidbody2D;
     private BoxCollider2D boxCollider2D;
+    private CircleCollider2D headCollider;
     public LayerMask whatIsGround;
+    public LayerMask whatIsCeiling;
 
     private bool m_FacingRight = false;
     public bool isKinematic = false;
     public bool grounded = true;
+    public bool hitHead = false;
     public bool playerGroundRayHit = true;
     public float groundedCounter;
     public float groundedCheckWaitTime = 0.2f;
@@ -24,7 +27,8 @@ public class PlayerControllerV2 : MonoBehaviour
         animator = GetComponent<Animator>();
         rigidbody2D = GetComponentInParent<Rigidbody2D>();
         boxCollider2D = GetComponentInParent<BoxCollider2D>();
-        
+        headCollider = transform.Find("Root Bone").GetChild(0).GetChild(0).GetComponent<CircleCollider2D>();
+        print(headCollider);
     }
 
     private void FixedUpdate()
@@ -32,29 +36,18 @@ public class PlayerControllerV2 : MonoBehaviour
         if (isFalling())
         {
             animator.SetBool("falling", true);
+            rigidbody2D.AddRelativeForce(new Vector2(0, -30), ForceMode2D.Force);
+
         }
         else
         {
             animator.SetBool("falling", false);
         }
 
-        //if (playerGroundRayHit && rigidbody2D.isKinematic)
-        //{
-        //    rigidbody2D.isKinematic = false;
-        //}
-
-        //if (isKinematic)
-        //{
-        //    rigidbody2D.isKinematic = true;
-        //}
-        //else
-        //{
-        //    rigidbody2D.isKinematic = false;
-        //}
 
         if (rawSpeed != 0 && !grounded && !rigidbody2D.isKinematic)
         {
-            rigidbody2D.AddRelativeForce(new Vector2(10 * rawSpeed, 0), ForceMode2D.Force);
+            rigidbody2D.AddRelativeForce(new Vector2(20 * rawSpeed, 0), ForceMode2D.Force);
         }
         else if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic)
         {
@@ -68,6 +61,15 @@ public class PlayerControllerV2 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        bool hitHead = this.hitHead; ;
+
+        this.hitHead = sendHeadRay().collider != null;
+        if (this.hitHead)
+        {
+            rigidbody2D.isKinematic = false;
+            print("noggin knocker");
+        }
+
         rawSpeed = Input.GetAxis("Horizontal");
         animator.SetFloat("speed", Mathf.Abs(rawSpeed));
         playerGroundRayHit = sendGroundRay().collider != null;
@@ -82,32 +84,25 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         jumpInput();
 
-        //if (playerGroundRayHit && rigidbody2D.isKinematic)
-        //{
-        //    rigidbody2D.isKinematic = false;
-        //    isKinematic = false;
-        //}
     }
 
     public void setKinematic(string val)
     {
         isKinematic = bool.Parse(val);
         rigidbody2D.isKinematic = isKinematic;
-        //if (!isKinematic)
-        //{
-        //    animator.SetBool("jump", false);
-        //}
+        animator.SetBool("falling", true);
     }
     void jumpInput() 
     {
+
         bool wasGrounded = grounded;
         grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
 
         if (Input.GetButtonDown("Jump") && grounded)
         {
-            //isKinematic = true;
             rigidbody2D.isKinematic = true;
             animator.SetBool("jump", true);
+            animator.SetTrigger("jumpTrigger");
         }
         
         if (!wasGrounded && grounded)
@@ -127,33 +122,7 @@ public class PlayerControllerV2 : MonoBehaviour
 
         if (groundedCounter <= 0)
         {
-            //bool wasGrounded = grounded;
-            //grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
 
-            //if (!wasGrounded && grounded)
-            //{
-            //    animator.SetBool("grounded", true);
-            //    isKinematic = false;
-            //    if (animator.GetBool("jump"))
-            //    {
-            //        animator.SetBool("jump", false);
-            //    }
-            //}
-            //else if (wasGrounded && !grounded)
-            //{
-            //    animator.SetBool("grounded", false);
-            //}
-            
-            //if (Input.GetButtonDown("Jump") && grounded)
-            //{
-            //    animator.SetBool("jump", true);
-            //    //animator.SetBool("grounded", false);
-            //    groundedCounter = groundedCheckWaitTime;
-            //}
-            //else if (!playerGroundRayHit)
-            //{
-            //    animator.SetBool("grounded", false);
-            //}
         }
         else
         {
@@ -195,6 +164,24 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         //print("Hit: " + raycastHit.collider?.gameObject?.name);
         Debug.DrawRay(boxCollider2D.bounds.center, Vector2.down * (boxCollider2D.bounds.extents.y), rayColor);
+        return raycastHit;
+    }    
+    
+    RaycastHit2D sendHeadRay()
+    {
+        RaycastHit2D raycastHit = Physics2D.Raycast(headCollider.transform.position + (Vector3.up * 1.1f), Vector3.up, .3f, whatIsCeiling);
+        raycastHitDistance = raycastHit.distance;
+        Color rayColor;
+        if (raycastHit.collider != null)
+        {
+            rayColor = Color.green;
+        }
+        else
+        {
+            rayColor = Color.red;
+        }
+        //print("Hit: " + raycastHit.collider?.gameObject?.name);
+        Debug.DrawRay(headCollider.bounds.center, Vector2.up * (headCollider.bounds.extents.y), rayColor);
         return raycastHit;
     }
 
