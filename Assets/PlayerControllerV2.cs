@@ -37,6 +37,7 @@ public class PlayerControllerV2 : MonoBehaviour
         {
             animator.SetBool("falling", true);
             rigidbody2D.AddRelativeForce(new Vector2(0, -30), ForceMode2D.Force);
+            //rigidbody2D.rotation += 5.0f;
 
         }
         else
@@ -146,6 +147,7 @@ public class PlayerControllerV2 : MonoBehaviour
             //newPosition.x += animator.GetFloat("Runspeed") * Time.deltaTime;
             //transform.position = newPosition;
             transform.parent.position += animator.deltaPosition;
+            transform.parent.rotation = animator.deltaRotation;
         }
     }
 
