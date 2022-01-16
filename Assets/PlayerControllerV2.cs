@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class PlayerControllerV2 : MonoBehaviour
 {
+    public TextMesh playersLastActionHUD;
+
     private Animator animator;
     private Rigidbody2D rigidbody2D;
     //private BoxCollider2D boxCollider2D;
@@ -10,11 +12,13 @@ public class PlayerControllerV2 : MonoBehaviour
     private CircleCollider2D headCollider;
     public LayerMask whatIsGround;
     public LayerMask whatIsCeiling;
+    public LayerMask everything;
 
     private bool m_FacingRight = false;
     public bool isKinematic = false;
     public bool grounded = true;
     public bool hitHead = false;
+    public bool wasGrounded = true;
     public bool playerGroundRayHit = true;
     public bool doubleJump = false;
     public float groundedCounter;
@@ -30,6 +34,7 @@ public class PlayerControllerV2 : MonoBehaviour
         rigidbody2D = GetComponentInParent<Rigidbody2D>();
         boxCollider2D = GetComponentInParent<CapsuleCollider2D>();
         headCollider = transform.Find("Root Bone").GetChild(0).GetChild(0).GetComponent<CircleCollider2D>();
+        playersLastActionHUD = GameObject.Find("HUDPlayerAction").GetComponent<TextMesh>();
     }
 
     private void FixedUpdate()
@@ -50,7 +55,7 @@ public class PlayerControllerV2 : MonoBehaviour
         {
             rigidbody2D.AddRelativeForce(new Vector2(20 * rawSpeed, 0), ForceMode2D.Force);
         }
-        else if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic)
+        else if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic && !wasGrounded && !hitHead)
         {
             rigidbody2D.velocity = new Vector2(9, 0) * rawSpeed;
         }
@@ -64,20 +69,40 @@ public class PlayerControllerV2 : MonoBehaviour
     {
         respawn();
 
-        //Check if you hit something while moving upwards
-        bool hitHead = this.hitHead; ;
-        this.hitHead = sendHeadRay().collider != null;
-        if (this.hitHead)
+        Collider2D nearSomething = nearAGameobject();
+        if (nearSomething != null)
         {
-            rigidbody2D.isKinematic = false;
+            int numColliders = 10;
+            Collider2D[] colliders = new Collider2D[numColliders];
+            ContactFilter2D contactFilter = new ContactFilter2D();
+
+            nearSomething.OverlapCollider(contactFilter, colliders);
+
+            if (nearSomething != null)
+            {
+                print(nearSomething.name);
+            }
         }
 
-        //Check if youre grounded
-        bool wasGrounded = grounded;
+
+        //Check if you hit something while moving upwards
+        bool hitHead = this.hitHead;
+        Collider2D col = sendHeadRay().collider;
+        this.hitHead = col != null;
+        if (this.hitHead)
+        {
+             if (col.sharedMaterial != null && !col.sharedMaterial.name.Equals("wall")) {
+                rigidbody2D.isKinematic = false;
+            }
+        }
+
+        //Check if youre grounded 
+        wasGrounded = grounded;
         grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
 
         if (!wasGrounded && grounded)
         {
+            playersLastActionHUD.text = "grounded?";
             rigidbody2D.isKinematic = false;
             animator.SetBool("jump", false);
             animator.SetBool("grounded", true);
@@ -86,6 +111,7 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         else if (!grounded)
         {
+            playersLastActionHUD.text = "in air?";
             animator.SetBool("grounded", false);
         }
 
@@ -174,7 +200,7 @@ public class PlayerControllerV2 : MonoBehaviour
     
     RaycastHit2D sendHeadRay()
     {
-        RaycastHit2D raycastHit = Physics2D.Raycast(headCollider.transform.position + (Vector3.up * 1.1f), Vector3.up, .3f, whatIsCeiling);
+        RaycastHit2D raycastHit = Physics2D.Raycast(headCollider.transform.position + (Vector3.up * 1.1f), Vector3.up, .6f, whatIsCeiling);
         raycastHitDistance = raycastHit.distance;
         Color rayColor;
         if (raycastHit.collider != null)
@@ -187,6 +213,11 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         Debug.DrawRay(headCollider.bounds.center, Vector2.up * (headCollider.bounds.extents.y), rayColor);
         return raycastHit;
+    }
+
+    Collider2D nearAGameobject()
+    {
+        return Physics2D.OverlapCircle(boxCollider2D.transform.position, .8f, everything);
     }
 
     private void Flip()
