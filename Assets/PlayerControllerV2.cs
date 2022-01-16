@@ -16,6 +16,7 @@ public class PlayerControllerV2 : MonoBehaviour
     public bool grounded = true;
     public bool hitHead = false;
     public bool playerGroundRayHit = true;
+    public bool doubleJump = false;
     public float groundedCounter;
     public float groundedCheckWaitTime = 0.2f;
     public float rawSpeed;
@@ -33,12 +34,12 @@ public class PlayerControllerV2 : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isFalling())
+        if (isFalling() && !doubleJump)
         {
             animator.SetBool("falling", true);
+            rigidbody2D.isKinematic = false;
             rigidbody2D.AddRelativeForce(new Vector2(0, -30), ForceMode2D.Force);
             //rigidbody2D.rotation += 5.0f;
-
         }
         else
         {
@@ -62,6 +63,8 @@ public class PlayerControllerV2 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        respawn();
+
         //Check if you hit something while moving upwards
         bool hitHead = this.hitHead; ;
         this.hitHead = sendHeadRay().collider != null;
@@ -108,6 +111,15 @@ public class PlayerControllerV2 : MonoBehaviour
         isKinematic = bool.Parse(val);
         rigidbody2D.isKinematic = isKinematic;
         animator.SetBool("falling", true);
+        doubleJump = false;
+    }
+
+    public void doubleJumped()
+    {
+        //if (!rigidbody2D.isKinematic)
+        //{
+        //    rigidbody2D.isKinematic = true;
+        //}
     }
 
     void jumpInput() 
@@ -117,7 +129,18 @@ public class PlayerControllerV2 : MonoBehaviour
             rigidbody2D.isKinematic = true;
             animator.SetBool("jump", true);
             animator.SetTrigger("jumpTrigger");
-        }             
+        }
+        else if (Input.GetButtonDown("Jump") && animator.GetBool("jump")){
+            animator.SetBool("falling", false);
+            animator.SetTrigger("doubleJump");
+            doubleJump = true;
+            rigidbody2D.velocity = new Vector2(9, 0) * rawSpeed;
+            if (!rigidbody2D.isKinematic)
+            {
+                rigidbody2D.isKinematic = true;
+            }
+
+        }
     }
 
 
@@ -179,5 +202,16 @@ public class PlayerControllerV2 : MonoBehaviour
         Vector3 theScale = transform.localScale;
         theScale.x *= -1;
         transform.localScale = theScale;
+    }
+
+    private void respawn()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            transform.parent.transform.position = new Vector3(50, 0, 0);
+            rigidbody2D.isKinematic = false;
+            animator.SetBool("jump", false);
+            animator.SetBool("grounded", true);
+        }
     }
 }
