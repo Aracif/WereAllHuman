@@ -34,12 +34,11 @@ public class PlayerControllerV2 : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isFalling() && !doubleJump)
+        if (isFalling())
         {
             animator.SetBool("falling", true);
             rigidbody2D.isKinematic = false;
             rigidbody2D.AddRelativeForce(new Vector2(0, -30), ForceMode2D.Force);
-            //rigidbody2D.rotation += 5.0f;
         }
         else
         {
@@ -82,6 +81,8 @@ public class PlayerControllerV2 : MonoBehaviour
             rigidbody2D.isKinematic = false;
             animator.SetBool("jump", false);
             animator.SetBool("grounded", true);
+            doubleJump = false;
+
         }
         else if (!grounded)
         {
@@ -110,17 +111,10 @@ public class PlayerControllerV2 : MonoBehaviour
     {
         isKinematic = bool.Parse(val);
         rigidbody2D.isKinematic = isKinematic;
-        animator.SetBool("falling", true);
-        doubleJump = false;
+        //animator.SetBool("falling", true);
+        //doubleJump = false;
     }
 
-    public void doubleJumped()
-    {
-        //if (!rigidbody2D.isKinematic)
-        //{
-        //    rigidbody2D.isKinematic = true;
-        //}
-    }
 
     void jumpInput() 
     {
@@ -130,7 +124,7 @@ public class PlayerControllerV2 : MonoBehaviour
             animator.SetBool("jump", true);
             animator.SetTrigger("jumpTrigger");
         }
-        else if (Input.GetButtonDown("Jump") && animator.GetBool("jump")){
+        else if (Input.GetButtonDown("Jump") && animator.GetBool("jump") && !doubleJump){
             animator.SetBool("falling", false);
             animator.SetTrigger("doubleJump");
             doubleJump = true;
