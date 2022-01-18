@@ -6,6 +6,9 @@ public class PlayerControllerV2 : MonoBehaviour
     public TextMesh playersLastActionHUD;
     public TextMesh fallDistanceHUD;
     public TextMesh nearTextHUD;
+    public TextMesh velocityHUD;
+
+    public Collider2D nearSomething;
 
     private Animator animator;
     private Rigidbody2D rigidbody2D;
@@ -31,6 +34,13 @@ public class PlayerControllerV2 : MonoBehaviour
 
     [SerializeField] public float raycastHitDistance;
 
+
+    //Ledge Grab
+    private bool greenBox, redBox;
+    public float redXOffset = 0.8f, redYOffset = 2f, redXSize = 0.25f, redYSize = 0.15f, greenXOffset = 0.8f, greenYOffset = 1.3f, greenXSize = 0.2f, greenYSize = 0.15f;
+    private float startingGrav;
+    public bool isGrabbingLedge;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -41,10 +51,16 @@ public class PlayerControllerV2 : MonoBehaviour
         playersLastActionHUD = GameObject.Find("HUDPlayerAction").GetComponent<TextMesh>();
         nearTextHUD = GameObject.Find("NearText").GetComponent<TextMesh>();
         fallDistanceHUD = GameObject.Find("FallDistance").GetComponent<TextMesh>();
+        velocityHUD = GameObject.Find("VelocityInfo").GetComponent<TextMesh>();
+
+        startingGrav = rigidbody2D.gravityScale;
     }
 
     private void FixedUpdate()
     {
+        velocityHUD.text = string.Format("Velocity: x{0} y{1}", rigidbody2D.velocity.x, rigidbody2D.velocity.y);
+
+        //Logic related to falling
         if (isFalling())
         {
             if (fallPoint.y == 0)
@@ -68,9 +84,14 @@ public class PlayerControllerV2 : MonoBehaviour
         {
             rigidbody2D.AddRelativeForce(new Vector2(20 * rawSpeed, 0), ForceMode2D.Force);
         }
-        else if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic && !wasGrounded && !hitHead)
+
+        if (rawSpeed != 0 && !grounded && rigidbody2D.isKinematic && !wasGrounded && !hitHead && nearSomething==null)
         {
             rigidbody2D.velocity = new Vector2(9, 0) * rawSpeed;
+        }
+        else if (nearSomething != null)
+        {
+            rigidbody2D.velocity = new Vector2(0, rigidbody2D.velocity.y);
         }
 
 
@@ -80,22 +101,20 @@ public class PlayerControllerV2 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        velocityHUD.text = string.Format("Velocity: x{0} y{1}", rigidbody2D.velocity.x, rigidbody2D.velocity.y);
+
+        //Respawn player for testing purposes
         respawn();
 
-        Collider2D nearSomething = nearAGameobject();
+        //Are we close to another gameobject?
+        nearSomething = nearAGameobject();
         if (nearSomething != null)
         {
             int numColliders = 10;
             Collider2D[] colliders = new Collider2D[numColliders];
             ContactFilter2D contactFilter = new ContactFilter2D();
-
-            nearSomething.OverlapCollider(contactFilter, colliders);
-
-            if (nearSomething != null)
-            {
-                nearTextHUD.text = "Near: " + nearSomething.name;
-                //print(nearSomething.name);
-            }
+            nearSomething.OverlapCollider(contactFilter, colliders); //Other colliders that overlap the collision
+            nearTextHUD.text = "Near: " + nearSomething.name;
         }
 
 
@@ -143,7 +162,7 @@ public class PlayerControllerV2 : MonoBehaviour
         }
 
         jumpInput();
-
+        ledgeGrab();
     }
 
     //Used as animation event for standard single jump
@@ -155,6 +174,21 @@ public class PlayerControllerV2 : MonoBehaviour
         //doubleJump = false;
     }
 
+    void ledgeGrab()
+    {
+        greenBox = Physics2D.OverlapBox(new Vector2(transform.position.x + (greenXOffset * transform.localScale.x), transform.position.y + greenYOffset), new Vector2(greenXSize, greenYSize), 0f, whatIsGround);
+        redBox = Physics2D.OverlapBox(new Vector2(transform.position.x + (redXOffset * transform.localScale.x), transform.position.y + redYOffset), new Vector2(redXSize, redYSize), 0f, whatIsGround);
+
+        if (greenBox && !redBox && !isGrabbingLedge)
+        {
+            isGrabbingLedge = true;
+            print("grabbedeeem");
+        }
+        else
+        {
+            isGrabbingLedge = false;
+        }
+    }
 
     void jumpInput() 
     {
@@ -177,6 +211,15 @@ public class PlayerControllerV2 : MonoBehaviour
         }
     }
 
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(new Vector2(transform.position.x + (redXOffset * transform.localScale.x), transform.position.y + redYOffset), new Vector2(redXSize, redYSize));
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(new Vector2(transform.position.x + (greenXOffset * transform.localScale.x), transform.position.y + greenYOffset), new Vector2(greenXSize, greenYSize));
+
+    }
 
     //Recall that when this method is implemented you will receive "Root motion handled by script"
     //in unity IDE.
