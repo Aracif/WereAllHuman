@@ -4,15 +4,19 @@ using UnityEngine;
 public class PlayerControllerV2 : MonoBehaviour
 {
     public TextMesh playersLastActionHUD;
+    public TextMesh fallDistanceHUD;
+    public TextMesh nearTextHUD;
 
     private Animator animator;
     private Rigidbody2D rigidbody2D;
-    //private BoxCollider2D boxCollider2D;
     private CapsuleCollider2D boxCollider2D;
     private CircleCollider2D headCollider;
     public LayerMask whatIsGround;
     public LayerMask whatIsCeiling;
     public LayerMask everything;
+
+    public Vector2 fallPoint;
+    public float fallDistance;
 
     private bool m_FacingRight = false;
     public bool isKinematic = false;
@@ -35,12 +39,20 @@ public class PlayerControllerV2 : MonoBehaviour
         boxCollider2D = GetComponentInParent<CapsuleCollider2D>();
         headCollider = transform.Find("Root Bone").GetChild(0).GetChild(0).GetComponent<CircleCollider2D>();
         playersLastActionHUD = GameObject.Find("HUDPlayerAction").GetComponent<TextMesh>();
+        nearTextHUD = GameObject.Find("NearText").GetComponent<TextMesh>();
+        fallDistanceHUD = GameObject.Find("FallDistance").GetComponent<TextMesh>();
     }
 
     private void FixedUpdate()
     {
         if (isFalling())
         {
+            if (fallPoint.y == 0)
+            {
+                fallPoint = new Vector2(0,rigidbody2D.transform.position.y);
+            }
+            fallDistance = Vector2.Distance(new Vector2(0,rigidbody2D.transform.position.y), fallPoint);
+            fallDistanceHUD.text = "Fall Distance: " + fallDistance;
             animator.SetBool("falling", true);
             rigidbody2D.isKinematic = false;
             rigidbody2D.AddRelativeForce(new Vector2(0, -30), ForceMode2D.Force);
@@ -48,6 +60,7 @@ public class PlayerControllerV2 : MonoBehaviour
         else
         {
             animator.SetBool("falling", false);
+            fallPoint = new Vector2(0, 0);
         }
 
 
@@ -80,7 +93,8 @@ public class PlayerControllerV2 : MonoBehaviour
 
             if (nearSomething != null)
             {
-                print(nearSomething.name);
+                nearTextHUD.text = "Near: " + nearSomething.name;
+                //print(nearSomething.name);
             }
         }
 
@@ -100,9 +114,9 @@ public class PlayerControllerV2 : MonoBehaviour
         wasGrounded = grounded;
         grounded = Physics2D.OverlapCircle(boxCollider2D.gameObject.transform.position, .1f, whatIsGround);
 
-        if (!wasGrounded && grounded)
+        if (!wasGrounded && grounded )
         {
-            playersLastActionHUD.text = "grounded?";
+            playersLastActionHUD.text = "Grounded";
             rigidbody2D.isKinematic = false;
             animator.SetBool("jump", false);
             animator.SetBool("grounded", true);
@@ -111,7 +125,7 @@ public class PlayerControllerV2 : MonoBehaviour
         }
         else if (!grounded)
         {
-            playersLastActionHUD.text = "in air?";
+            playersLastActionHUD.text = "In Air";
             animator.SetBool("grounded", false);
         }
 

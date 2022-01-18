@@ -16,7 +16,7 @@ TagManager:
   - Water
   - UI
   - climbableWall
-  - 
+  - interactable
   - 
   - 
   - 
@@ -42,9 +42,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 2803171375
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Canvas
-    uniqueID: 2803171375
+  - name: Top
+    uniqueID: 3434476411
     locked: 0
